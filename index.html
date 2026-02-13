@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine?</title>
+  <style>
+    body{
+      margin:0;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #ffe6ee, #fff7e6);
+      overflow:hidden;
+    }
+    .card{
+      text-align:center;
+      background: rgba(255,255,255,0.85);
+      padding: 32px 28px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      min-width: 280px;
+    }
+    h1{
+      font-size: 22px;
+      margin: 0 0 18px;
+    }
+    .area{
+      position: relative;
+      width: min(520px, 90vw);
+      height: 220px;
+      margin: 10px auto 0;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    button{
+      border: 0;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform .1s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: scale(0.98); }
+
+    #yes{
+      position:absolute;
+      left: 30%;
+      top: 60%;
+      background:#ff4d7d;
+      color:white;
+    }
+
+    #no{
+      position:absolute;
+      left: 60%;
+      top: 60%;
+      background:#2d2d2d;
+      color:white;
+      touch-action:none;
+    }
+
+    #msg{
+      margin-top: 14px;
+      font-weight: 600;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Kanda will you be my valentine?</h1>
+
+    <div class="area" id="area">
+      <button id="yes">Yes 💖</button>
+      <button id="no">No 😅</button>
+    </div>
+
+    <div id="msg"></div>
+  </div>
+
+  <script>
+    const area = document.getElementById("area");
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const msg = document.getElementById("msg");
+
+    // Set starting position in pixels for smooth movement
+    function placeBtn(el, x, y){
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+    }
+
+    // Get bounds so the button stays inside the area
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    // Initialize pixel positions
+    function initPositions(){
+      const r = area.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      // Convert current % positions to px once
+      placeBtn(yesBtn, r.width*0.28, r.height*0.58);
+      placeBtn(noBtn,  r.width*0.62, r.height*0.58);
+    }
+    window.addEventListener("load", initPositions);
+    window.addEventListener("resize", initPositions);
+
+    // "No" runs away from cursor: moves opposite direction + a small circular wobble
+    area.addEventListener("mousemove", (e) => {
+      const areaRect = area.getBoundingClientRect();
+      const btnRect  = noBtn.getBoundingClientRect();
+
+      // Cursor position inside area
+      const mx = e.clientX - areaRect.left;
+      const my = e.clientY - areaRect.top;
+
+      // Button center inside area
+      const bx = (btnRect.left - areaRect.left) + btnRect.width/2;
+      const by = (btnRect.top  - areaRect.top)  + btnRect.height/2;
+
+      const dx = bx - mx;
+      const dy = by - my;
+      const dist = Math.hypot(dx, dy);
+
+      // If cursor gets close, push button away
+      const danger = 120; // how close before it runs
+      if (dist < danger) {
+        const angleAway = Math.atan2(dy, dx);         // direction away from cursor
+        const push = (danger - dist) * 1.6;           // stronger when closer
+
+        // Add circular-ish motion (wobble) so it feels like it loops around
+        const t = performance.now() / 220;
+        const wobble = 18;
+        const wobX = Math.cos(t) * wobble;
+        const wobY = Math.sin(t) * wobble;
+
+        // Current position (top-left) in px
+        const curLeft = parseFloat(noBtn.style.left || "0");
+        const curTop  = parseFloat(noBtn.style.top  || "0");
+
+        let newLeft = curLeft + Math.cos(angleAway) * push + wobX;
+        let newTop  = curTop  + Math.sin(angleAway) * push + wobY;
+
+        // Keep inside area
+        const maxLeft = areaRect.width  - btnRect.width  - 8;
+        const maxTop  = areaRect.height - btnRect.height - 8;
+        newLeft = clamp(newLeft, 8, maxLeft);
+        newTop  = clamp(newTop,  8, maxTop);
+
+        placeBtn(noBtn, newLeft, newTop);
+      }
+    });
+
+    // Mobile: if they tap near it, move it
+    area.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      const fakeEvent = { clientX: t.clientX, clientY: t.clientY };
+      area.dispatchEvent(new MouseEvent("mousemove", fakeEvent));
+    }, { passive: true });
+
+    yesBtn.addEventListener("click", () => {
+      msg.textContent = "Yay!! 💘 See you on Valentine’s 😄";
+      // Optionally hide the No button:
+      // noBtn.style.display = "none";
+    });
+
+    noBtn.addEventListener("click", () => {
+      msg.textContent = "Nice try 😈";
+    });
+  </script>
+</body>
+</html>

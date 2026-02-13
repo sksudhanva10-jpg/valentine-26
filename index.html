@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Valentine?</title>
+
   <style>
     body{
       margin:0;
@@ -15,28 +16,56 @@
       background: linear-gradient(135deg, #ffe6ee, #fff7e6);
       overflow:hidden;
     }
+
     .card{
       text-align:center;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.9);
       padding: 32px 28px;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-      min-width: 280px;
+      border-radius: 20px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+      min-width: 300px;
     }
+
+    .penguin{
+      font-size: 60px;
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce{
+      0%,100%{ transform: translateY(0); }
+      50%{ transform: translateY(-10px); }
+    }
+
     h1{
       font-size: 22px;
-      margin: 0 0 18px;
+      margin: 10px 0 18px;
     }
+
     .area{
       position: relative;
       width: min(520px, 90vw);
-      height: 220px;
+      height: 230px;
       margin: 10px auto 0;
       border-radius: 14px;
       background: rgba(255,255,255,0.6);
       border: 1px solid rgba(0,0,0,0.06);
       overflow: hidden;
     }
+
+    .heart{
+      position:absolute;
+      top: 20px;
+      left:50%;
+      transform: translateX(-50%);
+      font-size: 30px;
+      animation: float 2s infinite ease-in-out;
+    }
+
+    @keyframes float{
+      0%,100%{ transform: translate(-50%,0); }
+      50%{ transform: translate(-50%,-12px); }
+    }
+
     button{
       border: 0;
       padding: 12px 18px;
@@ -45,9 +74,9 @@
       cursor: pointer;
       transition: transform .1s ease;
       user-select:none;
-      -webkit-tap-highlight-color: transparent;
     }
-    button:active{ transform: scale(0.98); }
+
+    button:active{ transform: scale(0.95); }
 
     #yes{
       position:absolute;
@@ -63,7 +92,6 @@
       top: 60%;
       background:#2d2d2d;
       color:white;
-      touch-action:none;
     }
 
     #msg{
@@ -73,11 +101,14 @@
     }
   </style>
 </head>
+
 <body>
   <div class="card">
+    <div class="penguin">🐧</div>
     <h1>Kanda will you be my valentine?</h1>
 
     <div class="area" id="area">
+      <div class="heart">❤️</div>
       <button id="yes">Yes 💖</button>
       <button id="no">No 😅</button>
     </div>
@@ -91,36 +122,29 @@
     const yesBtn = document.getElementById("yes");
     const msg = document.getElementById("msg");
 
-    // Set starting position in pixels for smooth movement
     function placeBtn(el, x, y){
       el.style.left = x + "px";
       el.style.top  = y + "px";
     }
 
-    // Get bounds so the button stays inside the area
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
-    // Initialize pixel positions
     function initPositions(){
       const r = area.getBoundingClientRect();
-      const b = noBtn.getBoundingClientRect();
-      // Convert current % positions to px once
-      placeBtn(yesBtn, r.width*0.28, r.height*0.58);
-      placeBtn(noBtn,  r.width*0.62, r.height*0.58);
+      placeBtn(yesBtn, r.width*0.28, r.height*0.6);
+      placeBtn(noBtn,  r.width*0.62, r.height*0.6);
     }
+
     window.addEventListener("load", initPositions);
     window.addEventListener("resize", initPositions);
 
-    // "No" runs away from cursor: moves opposite direction + a small circular wobble
     area.addEventListener("mousemove", (e) => {
       const areaRect = area.getBoundingClientRect();
       const btnRect  = noBtn.getBoundingClientRect();
 
-      // Cursor position inside area
       const mx = e.clientX - areaRect.left;
       const my = e.clientY - areaRect.top;
 
-      // Button center inside area
       const bx = (btnRect.left - areaRect.left) + btnRect.width/2;
       const by = (btnRect.top  - areaRect.top)  + btnRect.height/2;
 
@@ -128,28 +152,24 @@
       const dy = by - my;
       const dist = Math.hypot(dx, dy);
 
-      // If cursor gets close, push button away
-      const danger = 120; // how close before it runs
+      const danger = 120;
+
       if (dist < danger) {
-        const angleAway = Math.atan2(dy, dx);         // direction away from cursor
-        const push = (danger - dist) * 1.6;           // stronger when closer
+        const angleAway = Math.atan2(dy, dx);
+        const push = (danger - dist) * 1.5;
 
-        // Add circular-ish motion (wobble) so it feels like it loops around
-        const t = performance.now() / 220;
-        const wobble = 18;
-        const wobX = Math.cos(t) * wobble;
-        const wobY = Math.sin(t) * wobble;
+        const t = performance.now() / 200;
+        const wobble = 15;
 
-        // Current position (top-left) in px
         const curLeft = parseFloat(noBtn.style.left || "0");
         const curTop  = parseFloat(noBtn.style.top  || "0");
 
-        let newLeft = curLeft + Math.cos(angleAway) * push + wobX;
-        let newTop  = curTop  + Math.sin(angleAway) * push + wobY;
+        let newLeft = curLeft + Math.cos(angleAway) * push + Math.cos(t) * wobble;
+        let newTop  = curTop  + Math.sin(angleAway) * push + Math.sin(t) * wobble;
 
-        // Keep inside area
         const maxLeft = areaRect.width  - btnRect.width  - 8;
         const maxTop  = areaRect.height - btnRect.height - 8;
+
         newLeft = clamp(newLeft, 8, maxLeft);
         newTop  = clamp(newTop,  8, maxTop);
 
@@ -157,17 +177,8 @@
       }
     });
 
-    // Mobile: if they tap near it, move it
-    area.addEventListener("touchstart", (e) => {
-      const t = e.touches[0];
-      const fakeEvent = { clientX: t.clientX, clientY: t.clientY };
-      area.dispatchEvent(new MouseEvent("mousemove", fakeEvent));
-    }, { passive: true });
-
     yesBtn.addEventListener("click", () => {
-      msg.textContent = "Yay!! 💘 See you on Valentine’s 😄";
-      // Optionally hide the No button:
-      // noBtn.style.display = "none";
+      msg.textContent = "Yay!! 💘 The penguin approves 🐧❤️";
     });
 
     noBtn.addEventListener("click", () => {
